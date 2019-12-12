@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#seleccionamos las ips
+grep "Failed" $1 | egrep -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}" > ips.txt
+
+#ordenamos y miramos cuantas veces se repiten
+sort ips.txt | uniq -c | sort -nr | sed 's/^[[:blank:]]*//g' | tr "[:blank:]" "," > ipsCount.txt
+
+#eliminamos los que sean menor de 10
+rm -rf ips.txt
+while IFS=, read -r count ip
+do
+	if [ $count -ge 10 ];then
+		echo "$count,$ip" >> ips.txt
+	fi
+done < ipsCount.txt
+#Buscamos la localizacion de las diferentes ip
+echo "Count,IP,Location"
+while IFS=, read -r count ip;do
+	locate=$(geoiplookup $ip | sed -r 's/.*, ([[:alpha:]])/\1/g')
+	echo "$count,$ip,$locate"
+done < ips.txt
+rm -rf ips* 
